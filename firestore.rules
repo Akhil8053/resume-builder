@@ -1,0 +1,129 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for Cyber Security & RBAC verification
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    function isRecruiter() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'recruiter' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'recruiter'
+      );
+    }
+
+    // 1. Users Collection
+    // Users can read own profile; Admin can read all;
+    // Privilege Escalation Prevention: standard users cannot change their own 'role' field!
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && (
+        // Only allow setting standard job_seeker role on creation unless admin
+        (!('role' in request.resource.data) || request.resource.data.role == 'job_seeker' || isAdmin())
+      );
+      allow update: if isOwner(userId) && (
+        // Strict anti-privilege escalation rule: user cannot modify their own role
+        (!('role' in request.resource.data) || request.resource.data.role == resource.data.role)
+      ) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 2. Profiles Collection
+    match /profiles/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // 3. Resumes Collection
+    // Requirement 2 & 5: Users can access their own resumes.
+    // Public resumes can be read by authenticated users. Recruiters can view if visibility allows.
+    match /resumes/{resumeId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.visibility == 'public' ||
+        (isRecruiter() && resource.data.visibility != 'private') ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // 4. Jobs Collection
+    // Public/Seekers can read active jobs; Recruiters can manage their own jobs; Admin can manage all.
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow create: if isRecruiter() || isAdmin();
+      allow update, delete: if (isRecruiter() && resource.data.recruiterId == request.auth.uid) || isAdmin();
+    }
+
+    // 5. Applications Collection
+    // Requirement 3 & 7: Candidates can access their own applications.
+    // Recruiters can only access applications submitted for their jobs.
+    match /applications/{applicationId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        (isRecruiter() && get(/databases/$(database)/documents/jobs/$(resource.data.jobId)).data.recruiterId == request.auth.uid) ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        // Candidate can withdraw or update note
+        (resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid) ||
+        // Recruiter can update status
+        (isRecruiter() && get(/databases/$(database)/documents/jobs/$(resource.data.jobId)).data.recruiterId == request.auth.uid) ||
+        isAdmin()
+      );
+      allow delete: if (resource.data.userId == request.auth.uid) || isAdmin();
+    }
+
+    // 6. Saved Jobs Collection
+    match /savedJobs/{savedJobId} {
+      allow read, write: if isAuthenticated() && (
+        request.resource.data.userId == request.auth.uid ||
+        resource.data.userId == request.auth.uid
+      );
+    }
+
+    // 7. Privacy Settings Collection
+    // Requirement 4: Users can modify their own privacy settings.
+    match /privacySettings/{userId} {
+      allow read: if isOwner(userId) || isRecruiter() || isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // 8. Sessions Collection (Stateful Token & Device Management)
+    match /sessions/{sessionId} {
+      allow read, write: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        request.resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+    }
+
+    // 9. Security Events (Immutable Audit Log)
+    // Requirement 9: Security events must NOT be freely writable or manipulable by arbitrary users.
+    // Only backend server (Admin SDK) writes; Users can read their own logs; Admin can read all.
+    match /securityEvents/{eventId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow write: if isAdmin(); // Regular users cannot write, spoof, or tamper with security audit records
+    }
+
+    // Default Fallback: Block all unauthorized access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

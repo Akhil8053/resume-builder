@@ -1,0 +1,14 @@
+node_modules/
+.env
+uploads/*
+!uploads/.gitkeep
+*.sqlite-wal
+*.sqlite-shm
+.DS_Store
+.vercel
+serviceAccountKey.json
+*serviceAccount*.json
+.env
+.env.*
+serviceAccountKey.json
+node_modules/

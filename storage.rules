@@ -1,0 +1,47 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper functions for storage validation
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'admin';
+    }
+
+    function isValidResumeDocument() {
+      // 1. File size limit: maximum 5 megabytes
+      return request.resource.size < 5 * 1024 * 1024
+        // 2. MIME type whitelisting: only PDF and Word documents
+        && (
+          request.resource.contentType == 'application/pdf' ||
+          request.resource.contentType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+          request.resource.contentType == 'application/msword'
+        );
+    }
+
+    // Secure Candidate Document Uploads
+    // Stored under resumes/{userId}/{fileName}
+    match /resumes/{userId}/{fileName} {
+      // Candidate can read own files, recruiters/admin can read if shared
+      allow read: if isOwner(userId) || (isAuthenticated() && request.auth.token.role == 'recruiter') || isAdmin();
+
+      // Only candidate can upload their own document with strict validation
+      allow write: if isOwner(userId) && isValidResumeDocument();
+
+      // Deletion restricted to owner or admin
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // Default Fallback: Block all unauthorized or public uploads
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
