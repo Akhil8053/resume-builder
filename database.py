@@ -11,6 +11,10 @@ else:
     DB_PATH = os.path.join(os.path.dirname(__file__), 'portal.db')
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_password(password, hashed):
+    return hash_password(password) == hashed
+
 def ensure_db_ready():
     if os.environ.get('VERCEL'):
         base_db = os.path.join(os.path.dirname(__file__), 'portal.db')
