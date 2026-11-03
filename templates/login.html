@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}CareerCraft | Dual Portal Login (Job Seeker vs Company){% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-10">
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-black text-slate-900 tracking-tight">CareerCraft Access Portals</h1>
+        <p class="text-sm text-slate-500 mt-1.5">Choose your portal to sign in or test with instant 1-click evaluation access.</p>
+    </div>
+
+    <!-- Dual Portal Selection Tabs -->
+    <div class="flex items-center justify-center p-1.5 bg-slate-200/80 rounded-2xl max-w-md mx-auto mb-8 text-xs font-bold shadow-inner">
+        <button type="button" id="tab-candidate" class="portal-tab flex-1 py-2.5 rounded-xl transition flex items-center justify-center space-x-2 bg-white text-teal-800 shadow-sm">
+            <i class="fa-solid fa-user-graduate text-teal-600"></i>
+            <span>Job Seeker / Student</span>
+        </button>
+        <button type="button" id="tab-company" class="portal-tab flex-1 py-2.5 rounded-xl transition flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900">
+            <i class="fa-solid fa-building text-blue-600"></i>
+            <span>Company / Employer</span>
+        </button>
+    </div>
+
+    <!-- Error Alert -->
+    {% if error %}
+    <div class="mb-6 max-w-lg mx-auto p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center space-x-2">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <!-- PORTAL 1: JOB SEEKER / STUDENT LOGIN -->
+    <div id="portal-candidate-box" class="bg-white border border-teal-100 rounded-3xl p-8 shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 right-0 h-1.5 bg-teal-500"></div>
+
+        <div class="flex items-start justify-between mb-6">
+            <div>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200">
+                    Candidate & Student Portal
+                </span>
+                <h2 class="text-xl font-black text-slate-900 mt-1">Sign in to Build Resumes & Apply</h2>
+                <p class="text-xs text-slate-500 mt-0.5">Build ATS resumes, discover verified jobs, and track your applications.</p>
+            </div>
+            <span class="w-10 h-10 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-file-signature"></i>
+            </span>
+        </div>
+
+        <!-- 1-Click Candidate Demo Button -->
+        <div class="mb-5 p-3.5 bg-teal-50/60 rounded-2xl border border-teal-200 flex items-center justify-between">
+            <div>
+                <div class="text-xs font-bold text-teal-900">Demo Candidate Account (Alex Morgan)</div>
+                <div class="text-[11px] text-teal-700">Pre-loaded with sample resume, skills, and applications</div>
+            </div>
+            <a href="{{ url_for('demo_login', role='applicant') }}" class="px-3.5 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-sm transition whitespace-nowrap">
+                ⚡ Instant Login
+            </a>
+        </div>
+
+        <form method="POST" action="{{ url_for('login_page') }}" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
+                <input type="email" name="email" value="alex@demo.com" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
+                <input type="password" name="password" value="password123" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+            </div>
+            <button type="submit" class="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs shadow-md transition">
+                Sign in to Candidate Portal
+            </button>
+        </form>
+
+        <div class="mt-5 text-center text-xs text-slate-500">
+            New candidate? <a href="{{ url_for('register_page') }}" class="text-teal-600 font-bold hover:underline">Register free account</a>
+        </div>
+    </div>
+
+    <!-- PORTAL 2: COMPANY / RECRUITER LOGIN (Hidden by default, toggled via tab) -->
+    <div id="portal-company-box" class="hidden bg-white border border-blue-100 rounded-3xl p-8 shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 right-0 h-1.5 bg-blue-600"></div>
+
+        <div class="flex items-start justify-between mb-6">
+            <div>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                    Company & Employer Portal
+                </span>
+                <h2 class="text-xl font-black text-slate-900 mt-1">Sign in to Post Jobs & Review Resumes</h2>
+                <p class="text-xs text-slate-500 mt-0.5">Post openings, download applicant resumes, and update hiring stages.</p>
+            </div>
+            <span class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-briefcase"></i>
+            </span>
+        </div>
+
+        <!-- 1-Click Company Demo Button -->
+        <div class="mb-5 p-3.5 bg-blue-50/60 rounded-2xl border border-blue-200 flex items-center justify-between">
+            <div>
+                <div class="text-xs font-bold text-blue-900">Demo Employer Account (Sarah Jenkins)</div>
+                <div class="text-[11px] text-blue-700">Pre-configured with published job postings and candidate queue</div>
+            </div>
+            <a href="{{ url_for('demo_login', role='recruiter') }}" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition whitespace-nowrap">
+                ⚡ Instant Login
+            </a>
+        </div>
+
+        <form method="POST" action="{{ url_for('login_page') }}" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Company Work Email</label>
+                <input type="email" name="email" value="sarah@recruiter.com" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
+                <input type="password" name="password" value="password123" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md transition">
+                Sign in to Company Portal
+            </button>
+        </form>
+
+        <div class="mt-5 text-center text-xs text-slate-500">
+            Hiring for your team? <a href="{{ url_for('register_page') }}" class="text-blue-600 font-bold hover:underline">Create company recruiter account</a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const tabCandidate = document.getElementById('tab-candidate');
+    const tabCompany = document.getElementById('tab-company');
+    const boxCandidate = document.getElementById('portal-candidate-box');
+    const boxCompany = document.getElementById('portal-company-box');
+
+    function switchPortal(portal) {
+        if (portal === 'company') {
+            tabCompany.className = 'portal-tab flex-1 py-2.5 rounded-xl transition flex items-center justify-center space-x-2 bg-white text-blue-800 shadow-sm';
+            tabCandidate.className = 'portal-tab flex-1 py-2.5 rounded-xl transition flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900';
+            boxCandidate.classList.add('hidden');
+            boxCompany.classList.remove('hidden');
+        } else {
+            tabCandidate.className = 'portal-tab flex-1 py-2.5 rounded-xl transition flex items-center justify-center space-x-2 bg-white text-teal-800 shadow-sm';
+            tabCompany.className = 'portal-tab flex-1 py-2.5 rounded-xl transition flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900';
+            boxCompany.classList.add('hidden');
+            boxCandidate.classList.remove('hidden');
+        }
+    }
+
+    tabCandidate.addEventListener('click', () => switchPortal('candidate'));
+    tabCompany.addEventListener('click', () => switchPortal('company'));
+
+    // Auto-switch tab based on URL query param (e.g. /login?portal=company)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('portal') === 'company') {
+        switchPortal('company');
+    }
+</script>
+{% endblock %}

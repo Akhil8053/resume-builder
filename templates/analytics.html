@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}CareerCraft | Recruiter Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header Banner -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                Employer Intelligence
+            </span>
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight mt-1">Hiring & Talent Analytics</h1>
+            <p class="text-sm text-slate-500 mt-1">Pipeline performance, application volume, and stage conversions.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <a href="{{ url_for('post_job_page') }}" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition">
+                + Post Opening
+            </a>
+            <a href="{{ url_for('application_tracker') }}" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-sm transition">
+                Manage Applicants
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center space-x-5">
+            <div class="w-14 h-14 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center text-2xl font-bold">
+                <i class="fa-solid fa-users-viewfinder"></i>
+            </div>
+            <div>
+                <div class="text-3xl font-black text-slate-900">{{ total_apps }}</div>
+                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Candidate Applications</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center space-x-5">
+            <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl font-bold">
+                <i class="fa-solid fa-briefcase"></i>
+            </div>
+            <div>
+                <div class="text-3xl font-black text-slate-900">{{ total_jobs }}</div>
+                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Job Postings</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center space-x-5">
+            <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl font-bold">
+                <i class="fa-solid fa-file-shield"></i>
+            </div>
+            <div>
+                <div class="text-3xl font-black text-slate-900">{{ total_resumes }}</div>
+                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Talent Pool Profiles</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Visualizations -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+        
+        <!-- Funnel Chart (6 cols) -->
+        <div class="lg:col-span-6 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm">
+            <h3 class="text-base font-bold text-slate-900 mb-1">Recruitment Funnel Conversion</h3>
+            <p class="text-xs text-slate-500 mb-6">Distribution of applicants across hiring stages.</p>
+            <div class="relative h-64 flex items-center justify-center">
+                <canvas id="funnelChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Top Jobs Chart (6 cols) -->
+        <div class="lg:col-span-6 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm">
+            <h3 class="text-base font-bold text-slate-900 mb-1">Application Volume by Job Opening</h3>
+            <p class="text-xs text-slate-500 mb-6">Most applied positions in your company.</p>
+            <div class="relative h-64 flex items-center justify-center">
+                <canvas id="jobsChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Funnel Data
+    const statusData = {{ status_dict | tojson }};
+    const funnelLabels = ['Submitted', 'Under Review', 'Interviewing', 'Offer Extended', 'Rejected'];
+    const funnelCounts = funnelLabels.map(l => statusData[l] || 0);
+
+    const ctxFunnel = document.getElementById('funnelChart').getContext('2d');
+    new Chart(ctxFunnel, {
+        type: 'doughnut',
+        data: {
+            labels: funnelLabels,
+            datasets: [{
+                data: funnelCounts,
+                backgroundColor: ['#94a3b8', '#3b82f6', '#f59e0b', '#10b981', '#f43f5e'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+            }
+        }
+    });
+
+    // Job Stats Data
+    const jobStats = {{ job_stats | tojson }};
+    const jobLabels = jobStats.map(j => j.title.length > 18 ? j.title.substring(0, 18) + '...' : j.title);
+    const jobCounts = jobStats.map(j => j.app_count);
+
+    const ctxJobs = document.getElementById('jobsChart').getContext('2d');
+    new Chart(ctxJobs, {
+        type: 'bar',
+        data: {
+            labels: jobLabels,
+            datasets: [{
+                label: 'Applicants',
+                data: jobCounts,
+                backgroundColor: '#0d9488',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0, font: { size: 11 } } },
+                x: { ticks: { font: { size: 10 } } }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+</script>
+{% endblock %}

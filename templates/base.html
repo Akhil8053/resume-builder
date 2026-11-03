@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CareerCraft | Career & Resume Platform{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Merriweather', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans flex flex-col min-h-screen">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 no-print shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <a href="{{ url_for('index') }}" class="flex items-center space-x-2 text-teal-700 font-black text-xl tracking-tight">
+                        <span class="w-9 h-9 bg-teal-600 text-white rounded-xl flex items-center justify-center shadow-sm">
+                            <i class="fa-solid fa-file-contract text-base"></i>
+                        </span>
+                        <span>Career<span class="text-slate-900">Craft</span></span>
+                    </a>
+                </div>
+
+                <!-- Role-Specific Navigation Links -->
+                <nav class="hidden lg:flex items-center space-x-5 text-sm font-semibold text-slate-600">
+                    <a href="{{ url_for('index') }}" class="hover:text-teal-600 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-house text-xs text-slate-400"></i>
+                        <span>Home</span>
+                    </a>
+
+                    <!-- Candidate specific links (Only visible if candidate or public) -->
+                    {% if current_user.role != 'recruiter' %}
+                    <a href="{{ url_for('resume_builder') }}" class="hover:text-teal-600 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-wand-magic-sparkles text-xs text-slate-400"></i>
+                        <span>Resume Studio</span>
+                    </a>
+                    <a href="{{ url_for('resume_gallery') }}" class="hover:text-teal-600 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-folder-open text-xs text-slate-400"></i>
+                        <span>My Resumes</span>
+                    </a>
+                    <a href="{{ url_for('job_board') }}" class="hover:text-teal-600 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-briefcase text-xs text-slate-400"></i>
+                        <span>Explore Jobs</span>
+                    </a>
+                    {% if current_user.email %}
+                    <a href="{{ url_for('application_tracker') }}" class="hover:text-teal-600 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-clipboard-check text-xs text-slate-400"></i>
+                        <span>My Applications</span>
+                    </a>
+                    {% endif %}
+                    {% endif %}
+
+                    <!-- Company / Recruiter specific links (Only visible if recruiter) -->
+                    {% if current_user.role == 'recruiter' %}
+                    <a href="{{ url_for('post_job_page') }}" class="text-blue-700 hover:text-blue-900 transition flex items-center space-x-1.5 font-bold">
+                        <i class="fa-solid fa-plus-circle text-xs text-blue-600"></i>
+                        <span>Post a Job</span>
+                    </a>
+                    <a href="{{ url_for('application_tracker') }}" class="hover:text-teal-600 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-users-viewfinder text-xs text-slate-400"></i>
+                        <span>Track Resumes & Candidates</span>
+                    </a>
+                    <a href="{{ url_for('recruiter_analytics') }}" class="text-blue-600 hover:text-blue-800 transition flex items-center space-x-1.5 bg-blue-50 px-2.5 py-1 rounded-lg">
+                        <i class="fa-solid fa-chart-pie text-xs"></i>
+                        <span>Hiring Analytics</span>
+                    </a>
+                    {% endif %}
+                </nav>
+
+                <!-- Right Action Bar: Notifications & Role Switcher -->
+                <div class="flex items-center space-x-3 no-print">
+                    
+                    <!-- Notification Bell Dropdown -->
+                    {% if current_user.email %}
+                    <div class="relative">
+                        <button type="button" id="btn-notifications" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center relative transition">
+                            <i class="fa-solid fa-bell text-sm"></i>
+                            {% if unread_notifications_count > 0 %}
+                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center animate-pulse">
+                                {{ unread_notifications_count }}
+                            </span>
+                            {% endif %}
+                        </button>
+
+                        <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-4">
+                            <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
+                                <span class="font-bold text-xs text-slate-800">Notifications</span>
+                                <button type="button" id="btn-read-all-notifs" class="text-[11px] text-teal-600 font-semibold hover:underline">
+                                    Mark all read
+                                </button>
+                            </div>
+                            <div class="space-y-2 text-xs">
+                                {% if recent_notifications %}
+                                    {% for n in recent_notifications %}
+                                    <div class="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl transition">
+                                        <div class="text-slate-800 font-medium">{{ n.message }}</div>
+                                        <div class="text-[10px] text-slate-400 mt-1">{{ n.created_at }}</div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center py-4 text-slate-400 text-xs">No unread notifications</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Logged In User State -->
+                    {% if current_user.email %}
+                    <div class="flex items-center space-x-2 pl-2 border-l border-slate-200">
+                        <div class="text-right hidden sm:block">
+                            <div class="text-xs font-bold text-slate-800 leading-tight">{{ current_user.name }}</div>
+                            <span class="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded {% if current_user.role == 'recruiter' %}bg-blue-100 text-blue-800 border border-blue-200{% else %}bg-teal-100 text-teal-800 border border-teal-200{% endif %}">
+                                {% if current_user.role == 'recruiter' %}🏢 Company Portal{% else %}👤 Job Seeker{% endif %}
+                            </span>
+                        </div>
+                        <a href="{{ url_for('logout') }}" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 flex items-center justify-center text-xs transition" title="Sign Out">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        </a>
+                    </div>
+                    {% else %}
+                    <!-- Logged Out: Explicit Dual Portal Buttons -->
+                    <div class="flex items-center space-x-2">
+                        <a href="{{ url_for('login_page', portal='candidate') }}" class="px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 rounded-xl text-xs font-bold border border-teal-200 transition flex items-center space-x-1">
+                            <i class="fa-solid fa-user-graduate text-teal-600"></i>
+                            <span>Candidate Login</span>
+                        </a>
+                        <a href="{{ url_for('login_page', portal='company') }}" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-xl text-xs font-bold border border-blue-200 transition flex items-center space-x-1">
+                            <i class="fa-solid fa-building text-blue-600"></i>
+                            <span>Company Portal</span>
+                        </a>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Slot with Role Access Alerts -->
+    <main class="flex-grow">
+        {% if system_error %}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+            <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center space-x-3 shadow-sm">
+                <span class="w-6 h-6 rounded-full bg-rose-200 text-rose-700 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-ban"></i>
+                </span>
+                <span>{{ system_error }}</span>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if system_msg %}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+            <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center space-x-3 shadow-sm">
+                <span class="w-6 h-6 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-circle-info"></i>
+                </span>
+                <span>{{ system_msg }}</span>
+            </div>
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500 no-print mt-auto">
+        CareerCraft Dual Portal Platform • Candidate Resume Suite & Company Talent Tracker
+    </footer>
+
+    <script>
+        const btnNotif = document.getElementById('btn-notifications');
+        const notifDropdown = document.getElementById('notif-dropdown');
+        const btnReadAll = document.getElementById('btn-read-all-notifs');
+
+        if (btnNotif && notifDropdown) {
+            btnNotif.addEventListener('click', () => {
+                notifDropdown.classList.toggle('hidden');
+            });
+            document.addEventListener('click', (e) => {
+                if (!btnNotif.contains(e.target) && !notifDropdown.contains(e.target)) {
+                    notifDropdown.classList.add('hidden');
+                }
+            });
+        }
+
+        if (btnReadAll) {
+            btnReadAll.addEventListener('click', async () => {
+                await fetch('/api/notifications/read-all', { method: 'POST' });
+                window.location.reload();
+            });
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

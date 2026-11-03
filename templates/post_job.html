@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}CareerCraft | Post a New Job Opportunity{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+    <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-sm">
+        
+        <div class="mb-8 border-b border-slate-100 pb-5">
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200">
+                Recruiter Portal
+            </span>
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight mt-2">Publish a New Job Opening</h1>
+            <p class="text-sm text-slate-500 mt-1">Fill out the role details below to list it live on the CareerCraft job board.</p>
+        </div>
+
+        <form id="form-post-job" class="space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Job Title *</label>
+                    <input type="text" id="job-title" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="e.g. Senior Backend Engineer">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Hiring Company *</label>
+                    <input type="text" id="job-company" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="e.g. Nexora Cloud Systems">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Work Location *</label>
+                    <input type="text" id="job-location" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="e.g. Remote / Bengaluru">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Employment Type *</label>
+                    <select id="job-type" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                        <option value="Full-time">Full-time</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="Remote">Remote</option>
+                        <option value="Internship">Internship</option>
+                        <option value="Contract">Contract</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Role Category *</label>
+                    <select id="job-category" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                        <option value="Engineering">Engineering</option>
+                        <option value="Design">Design</option>
+                        <option value="Data">Data & Analytics</option>
+                        <option value="Product">Product Management</option>
+                        <option value="Marketing">Marketing</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Compensation / Salary Range *</label>
+                <input type="text" id="job-salary" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="e.g. $75,000 - $95,000 / yr or ₹12 - 18 LPA">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Role Overview & Responsibilities *</label>
+                <textarea id="job-description" rows="4" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="Describe the day-to-day responsibilities, mission, and team structure..."></textarea>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Qualifications & Requirements *</label>
+                <textarea id="job-requirements" rows="3" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="e.g. 3+ years Python experience; Strong REST API design; Familiarity with Docker & PostgreSQL..."></textarea>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex items-center justify-end space-x-3">
+                <a href="{{ url_for('job_board') }}" class="px-5 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition">
+                    Cancel
+                </a>
+                <button type="submit" id="btn-submit-job" class="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center space-x-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>Publish Job Opening</span>
+                </button>
+            </div>
+        </form>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const formPostJob = document.getElementById('form-post-job');
+    const btnSubmit = document.getElementById('btn-submit-job');
+
+    formPostJob.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            title: document.getElementById('job-title').value.trim(),
+            company: document.getElementById('job-company').value.trim(),
+            location: document.getElementById('job-location').value.trim(),
+            type: document.getElementById('job-type').value,
+            category: document.getElementById('job-category').value,
+            salary: document.getElementById('job-salary').value.trim(),
+            description: document.getElementById('job-description').value.trim(),
+            requirements: document.getElementById('job-requirements').value.trim()
+        };
+
+        const originalText = btnSubmit.innerHTML;
+        try {
+            btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Publishing...`;
+            btnSubmit.disabled = true;
+
+            const res = await fetch('/api/jobs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            if (result.success) {
+                alert(`🎉 Job opening "${payload.title}" published successfully!`);
+                window.location.href = '/jobs';
+            } else {
+                alert('❌ Failed: ' + (result.error || 'Server error'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('❌ Network error while publishing job.');
+        } finally {
+            btnSubmit.innerHTML = originalText;
+            btnSubmit.disabled = false;
+        }
+    });
+</script>
+{% endblock %}

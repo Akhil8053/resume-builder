@@ -1,0 +1,177 @@
+/* CareerCraft Custom Stylesheet & Multi-Template Architecture */
+
+.resume-sheet {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #ffffff;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    color: #1e293b;
+    box-sizing: border-box;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Template 1: Modern Teal */
+.resume-sheet.modern-theme {
+    border-top: 6px solid #0d9488;
+}
+.resume-sheet.modern-theme .resume-header {
+    border-bottom: 2px solid #0d9488;
+}
+.resume-sheet.modern-theme .section-title {
+    color: #0f766e;
+    border-bottom: 1.5px solid #ccfbf1;
+}
+.resume-sheet.modern-theme .skill-badge {
+    background-color: #f0fdfa;
+    color: #115e59;
+    border: 1px solid #99f6e4;
+}
+
+/* Template 2: Executive Navy */
+.resume-sheet.executive-theme {
+    border-top: 6px solid #1e3a8a;
+}
+.resume-sheet.executive-theme h1,
+.resume-sheet.executive-theme h2 {
+    font-family: 'Merriweather', Georgia, serif;
+}
+.resume-sheet.executive-theme .resume-header {
+    border-bottom: 2px solid #1e3a8a;
+}
+.resume-sheet.executive-theme .section-title {
+    color: #1e3a8a;
+    border-bottom: 1.5px solid #dbeafe;
+}
+.resume-sheet.executive-theme .skill-badge {
+    background-color: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
+/* Template 3: Minimalist Clean */
+.resume-sheet.minimalist-theme {
+    border-top: 6px solid #0f172a;
+}
+.resume-sheet.minimalist-theme .resume-header {
+    border-bottom: 2px solid #0f172a;
+}
+.resume-sheet.minimalist-theme .section-title {
+    color: #0f172a;
+    border-bottom: 1px solid #e2e8f0;
+    letter-spacing: 0.12em;
+}
+.resume-sheet.minimalist-theme .skill-badge {
+    background-color: #f8fafc;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+}
+
+/* Template 4: Two-Column Modern Sidebar */
+.resume-sheet.sidebar-theme {
+    display: flex;
+    flex-direction: row;
+    padding: 0 !important;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+}
+.resume-sheet.sidebar-theme .sidebar-col {
+    width: 34%;
+    background-color: #f1f5f9;
+    padding: 2.2rem 1.5rem;
+    border-right: 1px solid #e2e8f0;
+}
+.resume-sheet.sidebar-theme .main-col {
+    width: 66%;
+    padding: 2.2rem 2rem;
+}
+.resume-sheet.sidebar-theme .section-title {
+    color: #0f172a;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1.5px solid #cbd5e1;
+    padding-bottom: 3px;
+    margin-bottom: 10px;
+}
+.resume-sheet.sidebar-theme .skill-badge {
+    background-color: #ffffff;
+    color: #1e293b;
+    border: 1px solid #cbd5e1;
+}
+
+/* Common Badges */
+.skill-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 4px;
+}
+
+.lang-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 11px;
+    padding: 3px 0;
+}
+
+/* Color Palette Overrides */
+.color-teal { --accent-color: #0d9488; }
+.color-indigo { --accent-color: #4f46e5; }
+.color-violet { --accent-color: #7c3aed; }
+.color-rose { --accent-color: #e11d48; }
+
+/* Print Stylesheet for Flawless A4 PDF Export */
+@media print {
+    @page {
+        size: A4;
+        margin: 10mm 12mm;
+    }
+
+    body, html {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: #000000 !important;
+    }
+
+    .no-print,
+    header,
+    footer,
+    nav,
+    .template-btn,
+    button,
+    #apply-modal,
+    #note-modal,
+    #resume-preview-modal {
+        display: none !important;
+    }
+
+    .lg\:col-span-7, .bg-slate-200 {
+        width: 100% !important;
+        max-width: 100% !important;
+        position: static !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    #resume-document {
+        box-shadow: none !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        min-height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+    }
+
+    .resume-section {
+        page-break-inside: avoid;
+    }
+}

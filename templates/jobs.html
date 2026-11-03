@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}CareerCraft | Curated Job Board & ATS Matching{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Hidden Auth State for JS Validation -->
+    <div id="auth-state" 
+         data-logged-in="{{ 'true' if current_user.email else 'false' }}" 
+         data-role="{{ current_user.role or '' }}" 
+         class="hidden"></div>
+
+    <!-- Header & Search Banner -->
+    <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm mb-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Explore Verified Opportunities</h1>
+                <p class="text-sm text-slate-500 mt-1">Check your automated ATS resume match score and submit applications directly.</p>
+            </div>
+            <!-- STRICT CHECK: ONLY visible if logged in as verified recruiter -->
+            {% if current_user.role == 'recruiter' %}
+            <a href="{{ url_for('post_job_page') }}" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center space-x-1.5 self-start md:self-auto">
+                <i class="fa-solid fa-plus-circle"></i>
+                <span>Post a New Job</span>
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Filter Form -->
+        <form method="GET" action="{{ url_for('job_board') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-5 relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                <input type="text" name="q" value="{{ query }}" placeholder="Search by role title, company, or keywords..." 
+                       class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:bg-white focus:outline-none">
+            </div>
+
+            <div class="sm:col-span-3">
+                <select name="category" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-teal-500 focus:bg-white focus:outline-none">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if selected_cat == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="sm:col-span-2">
+                <select name="type" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-teal-500 focus:bg-white focus:outline-none">
+                    <option value="">All Types</option>
+                    {% for jt in job_types %}
+                    <option value="{{ jt }}" {% if selected_type == jt %}selected{% endif %}>{{ jt }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="sm:col-span-2 flex space-x-2">
+                <button type="submit" class="w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-sm transition shadow-sm flex items-center justify-center space-x-1.5">
+                    <i class="fa-solid fa-filter text-xs"></i>
+                    <span>Filter</span>
+                </button>
+                {% if query or selected_cat or selected_type %}
+                <a href="{{ url_for('job_board') }}" class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-sm font-semibold flex items-center justify-center" title="Clear Filters">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Job Listings Grid -->
+    <div class="space-y-4">
+        {% if jobs %}
+            {% for job in jobs %}
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition flex flex-col md:flex-row md:items-center justify-between gap-6" id="job-card-{{ job.id }}">
+                <div class="flex-grow max-w-3xl">
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">
+                            {{ job.category }}
+                        </span>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                            {{ job.type }}
+                        </span>
+                        <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                            {{ job.salary }}
+                        </span>
+                    </div>
+
+                    <h2 class="text-xl font-bold text-slate-900 mb-1 hover:text-teal-600 transition">{{ job.title }}</h2>
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 font-medium mb-3">
+                        <span><i class="fa-solid fa-building mr-1 text-slate-400"></i> {{ job.company }}</span>
+                        <span><i class="fa-solid fa-location-dot mr-1 text-slate-400"></i> {{ job.location }}</span>
+                        <span><i class="fa-regular fa-clock mr-1 text-slate-400"></i> Active Position</span>
+                    </div>
+
+                    <p class="text-sm text-slate-600 line-clamp-2 leading-relaxed mb-3">
+                        {{ job.description }}
+                    </p>
+
+                    <div class="text-xs text-slate-500">
+                        <span class="font-semibold text-slate-700">Requirements:</span> {{ job.requirements }}
+                    </div>
+                </div>
+
+                <div class="flex md:flex-col items-center justify-end gap-3 flex-shrink-0">
+                    <button type="button" 
+                            class="btn-open-apply w-full sm:w-auto px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold rounded-xl shadow-sm transition flex items-center justify-center space-x-2"
+                            data-job-id="{{ job.id }}"
+                            data-job-title="{{ job.title }}"
+                            data-job-company="{{ job.company }}"
+                            data-job-salary="{{ job.salary }}"
+                            data-job-location="{{ job.location }}"
+                            data-job-desc="{{ job.description }}"
+                            data-job-reqs="{{ job.requirements }}">
+                        <i class="fa-solid fa-bolt text-xs"></i>
+                        <span>Apply & Check ATS</span>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center py-16 bg-white rounded-3xl border border-slate-200">
+                <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto text-2xl mb-4">
+                    <i class="fa-solid fa-briefcase"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800">No matching jobs found</h3>
+                <p class="text-sm text-slate-500 mt-1">Try resetting your filters.</p>
+                <a href="{{ url_for('job_board') }}" class="mt-4 inline-block text-sm font-semibold text-teal-600 hover:underline">
+                    Reset all filters
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- Application & ATS Fit Modal -->
+<div id="apply-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 p-6 sm:p-8 relative">
+        
+        <button type="button" id="btn-close-modal" class="absolute top-6 right-6 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="mb-5">
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">
+                Application Studio
+            </span>
+            <h2 id="modal-job-title" class="text-2xl font-extrabold text-slate-900 mt-2">Job Title</h2>
+            <p id="modal-job-company" class="text-sm font-medium text-slate-500">Company Name • Location</p>
+        </div>
+
+        <!-- ATS Fit Score Section -->
+        <div class="mb-5 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+            <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-gauge-high text-teal-600"></i>
+                    <span class="text-xs font-bold text-slate-800">Automated ATS Resume Compatibility Scanner</span>
+                </div>
+                <button type="button" id="btn-run-ats" class="px-3 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition shadow-sm">
+                    ⚡ Scan My Fit
+                </button>
+            </div>
+
+            <div id="ats-results" class="hidden mt-3 pt-3 border-t border-slate-200 text-xs space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-slate-600 font-semibold">Match Score:</span>
+                        <span id="ats-score-text" class="text-base font-black text-emerald-600 ml-1">85%</span>
+                        <span id="ats-rating-badge" class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Strong Match</span>
+                    </div>
+                </div>
+
+                <div class="w-full bg-slate-200 rounded-full h-2">
+                    <div id="ats-progress-bar" class="bg-emerald-500 h-2 rounded-full transition-all duration-500" style="width: 85%"></div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                        <div class="text-[11px] font-bold text-emerald-700 mb-1">Matched Keywords:</div>
+                        <div id="ats-matched-tags" class="flex flex-wrap gap-1"></div>
+                    </div>
+                    <div>
+                        <div class="text-[11px] font-bold text-amber-700 mb-1">Missing / Recommended:</div>
+                        <div id="ats-missing-tags" class="flex flex-wrap gap-1"></div>
+                    </div>
+                </div>
+
+                <p id="ats-recommendation" class="text-[11px] text-slate-500 italic bg-white p-2.5 rounded-lg border border-slate-100"></p>
+            </div>
+        </div>
+
+        <!-- Application Form -->
+        <form id="form-job-apply" class="space-y-4">
+            <input type="hidden" id="apply-job-id" value="">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Your Full Name *</label>
+                    <input type="text" id="apply-name" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="Alex Morgan">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address *</label>
+                    <input type="email" id="apply-email" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="alex@example.com">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Portfolio / LinkedIn / GitHub URL</label>
+                <input type="text" id="apply-portfolio" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="https://github.com/username">
+            </div>
+
+            <!-- Resume Options -->
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                <label class="block text-xs font-bold text-slate-800">Resume Submission Method:</label>
+                
+                <div class="flex items-center space-x-6 text-xs font-medium text-slate-700">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="radio" name="resume_choice" id="choice-built" value="built" checked class="text-teal-600 focus:ring-teal-500">
+                        <span>Use CareerCraft Saved Profile</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="radio" name="resume_choice" id="choice-upload" value="upload" class="text-teal-600 focus:ring-teal-500">
+                        <span>Upload File (.PDF / .DOCX)</span>
+                    </label>
+                </div>
+
+                <div id="box-saved-resume" class="p-3 bg-white rounded-xl border border-slate-200 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-800"><i class="fa-solid fa-id-card text-teal-600 mr-1.5"></i> Profile Attachment</span>
+                        <span id="resume-attach-status" class="text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            Checking profile...
+                        </span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-1" id="resume-attach-details">
+                        Your latest saved resume will be attached to this application.
+                    </p>
+                    <input type="hidden" id="apply-resume-id" value="">
+                    <input type="hidden" id="apply-resume-summary" value="">
+                </div>
+
+                <div id="box-upload-resume" class="hidden p-3 bg-white rounded-xl border border-slate-200 text-xs space-y-2">
+                    <label class="block font-bold text-slate-800">Select Resume File:</label>
+                    <input type="file" id="apply-file" accept=".pdf,.doc,.docx" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 cursor-pointer">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Brief Cover Note / Pitch</label>
+                <textarea id="apply-cover-note" rows="3" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="Highlight why you are an ideal fit for this role..."></textarea>
+            </div>
+
+            <div class="pt-3 flex items-center justify-end space-x-3 border-t border-slate-100">
+                <button type="button" id="btn-cancel-apply" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 transition">
+                    Cancel
+                </button>
+                <button type="submit" id="btn-submit-apply" class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Submit Application</span>
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/jobs.js') }}"></script>
+{% endblock %}

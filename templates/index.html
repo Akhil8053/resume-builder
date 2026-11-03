@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}CareerCraft | Dual Portal Resume Builder & Job Suite{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+    <!-- Hero Section -->
+    <div class="text-center py-12 px-6 lg:px-12 bg-gradient-to-br from-slate-900 via-slate-800 to-teal-950 rounded-3xl text-white shadow-xl relative overflow-hidden mb-12">
+        <div class="relative z-10 max-w-3xl mx-auto">
+            <span class="inline-flex items-center px-3.5 py-1 rounded-full text-xs font-semibold bg-teal-500/20 text-teal-300 border border-teal-400/30 mb-6">
+                <i class="fa-solid fa-sparkles mr-2 text-teal-400"></i> Dual-Sided Hiring Platform
+            </span>
+            <h1 class="text-4xl sm:text-5xl font-black tracking-tight leading-tight mb-5">
+                Two Dedicated Portals, One Seamless Career Platform
+            </h1>
+            <p class="text-base text-slate-300 mb-8 leading-relaxed font-normal">
+                Whether you are a student crafting your dream tech resume or a company tracking candidate talent and publishing jobs, CareerCraft provides dedicated workspaces for both.
+            </p>
+
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
+                <a href="{{ url_for('login_page', portal='candidate') }}" class="w-full sm:w-auto px-6 py-3.5 bg-teal-500 hover:bg-teal-600 text-white font-bold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-user-graduate"></i>
+                    <span>Enter as Job Seeker / Student</span>
+                </a>
+                <a href="{{ url_for('login_page', portal='company') }}" class="w-full sm:w-auto px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-building"></i>
+                    <span>Enter as Company / Recruiter</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dual Dedicated Portals Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-14">
+        
+        <!-- Portal 1: Job Seeker Card -->
+        <div class="bg-white p-8 rounded-3xl border-2 border-teal-500/30 shadow-sm hover:shadow-md transition relative flex flex-col justify-between">
+            <div>
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200">
+                        Student & Candidate Workspace
+                    </span>
+                </div>
+
+                <h3 class="text-2xl font-black text-slate-900 mb-2">For Job Seekers & Students</h3>
+                <p class="text-sm text-slate-600 leading-relaxed mb-6">
+                    Create ATS-compliant resumes with real-time preview, test your compatibility score against any role, and apply to top jobs with 1-click.
+                </p>
+
+                <ul class="text-xs text-slate-600 space-y-2.5 mb-8">
+                    <li class="flex items-center"><i class="fa-solid fa-check text-teal-600 mr-2"></i> 4 Resume Templates (Modern, Sidebar, Executive, Minimalist)</li>
+                    <li class="flex items-center"><i class="fa-solid fa-check text-teal-600 mr-2"></i> Instant ATS Keyword Fit Scanner (Percentage Match)</li>
+                    <li class="flex items-center"><i class="fa-solid fa-check text-teal-600 mr-2"></i> Clean A4 PDF Export & Personal Resume Vault</li>
+                    <li class="flex items-center"><i class="fa-solid fa-check text-teal-600 mr-2"></i> Application Status Tracker with Real-Time Alerts</li>
+                </ul>
+            </div>
+
+            <div class="flex items-center space-x-3 pt-4 border-t border-slate-100">
+                <a href="{{ url_for('resume_builder') }}" class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Launch Resume Studio</span>
+                </a>
+                <a href="{{ url_for('demo_login', role='applicant') }}" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+                    ⚡ Demo Candidate Login
+                </a>
+            </div>
+        </div>
+
+        <!-- Portal 2: Company Card -->
+        <div class="bg-white p-8 rounded-3xl border-2 border-blue-500/30 shadow-sm hover:shadow-md transition relative flex flex-col justify-between">
+            <div>
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-building"></i>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                        Employer & Recruiter Workspace
+                    </span>
+                </div>
+
+                <h3 class="text-2xl font-black text-slate-900 mb-2">For Companies & Employers</h3>
+                <p class="text-sm text-slate-600 leading-relaxed mb-6">
+                    Publish open positions to the talent pool, track candidate resumes, schedule interviews, and evaluate hiring funnel analytics.
+                </p>
+
+                <ul class="text-xs text-slate-600 space-y-2.5 mb-8">
+                    <li class="flex items-center"><i class="fa-solid fa-check text-blue-600 mr-2"></i> Dedicated Recruiter Job Posting Portal with Form Validation</li>
+                    <li class="flex items-center"><i class="fa-solid fa-check text-blue-600 mr-2"></i> Candidate Resume Tracking & PDF Download Manager</li>
+                    <li class="flex items-center"><i class="fa-solid fa-check text-blue-600 mr-2"></i> Instant Candidate Status Updates (Review → Interview → Offer)</li>
+                    <li class="flex items-center"><i class="fa-solid fa-check text-blue-600 mr-2"></i> Visual Hiring Analytics Dashboard (Powered by Chart.js)</li>
+                </ul>
+            </div>
+
+            <div class="flex items-center space-x-3 pt-4 border-t border-slate-100">
+                <a href="{{ url_for('post_job_page') }}" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
+                    <i class="fa-solid fa-plus-circle"></i>
+                    <span>Publish Job Opening</span>
+                </a>
+                <a href="{{ url_for('demo_login', role='recruiter') }}" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+                    ⚡ Demo Company Login
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Live Platform Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-5">
+            <div class="w-14 h-14 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center text-2xl font-bold">
+                <i class="fa-solid fa-file-invoice"></i>
+            </div>
+            <div>
+                <div class="text-3xl font-black text-slate-900">{{ resumes_count }}</div>
+                <div class="text-xs font-semibold text-slate-500 uppercase">Resumes in Talent Vault</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-5">
+            <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl font-bold">
+                <i class="fa-solid fa-building-user"></i>
+            </div>
+            <div>
+                <div class="text-3xl font-black text-slate-900">{{ jobs_count }}</div>
+                <div class="text-xs font-semibold text-slate-500 uppercase">Active Company Openings</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-5">
+            <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-2xl font-bold">
+                <i class="fa-solid fa-paper-plane"></i>
+            </div>
+            <div>
+                <div class="text-3xl font-black text-slate-900">{{ apps_count }}</div>
+                <div class="text-xs font-semibold text-slate-500 uppercase">Applications Processed</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

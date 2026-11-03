@@ -1,0 +1,839 @@
+{% extends "base.html" %}
+
+{% block title %}CareerCraft | {% if current_user.role == 'recruiter' %}Company Talent Pipeline & Resume Tracker{% else %}My Job Applications{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header Banner Adaptive to Role -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+            {% if current_user.role == 'recruiter' %}
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                Company Talent Portal
+            </span>
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight mt-1">Candidate Pipeline & Resume Review</h1>
+            <p class="text-sm text-slate-500 mt-1">Review candidate resumes, inspect profiles, download attachments, and advance hiring stages.</p>
+            {% else %}
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200">
+                Candidate Tracking Portal
+            </span>
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight mt-1">My Job Applications</h1>
+            <p class="text-sm text-slate-500 mt-1">Monitor submitted applications, interview invitations, and status updates.</p>
+            {% endif %}
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+            {% if current_user.role == 'recruiter' %}
+            <button type="button" id="btn-export-csv" class="px-3.5 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-sm transition flex items-center space-x-1.5" title="Export candidate data to CSV">
+                <i class="fa-solid fa-file-csv text-emerald-600 text-sm"></i>
+                <span>Export CSV</span>
+            </button>
+            <a href="{{ url_for('post_job_page') }}" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-plus-circle"></i>
+                <span>Post New Opening</span>
+            </a>
+            <a href="{{ url_for('recruiter_analytics') }}" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Hiring Analytics</span>
+            </a>
+            {% else %}
+            <a href="{{ url_for('job_board') }}" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-briefcase"></i>
+                <span>Explore More Jobs</span>
+            </a>
+            <a href="{{ url_for('resume_builder') }}" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>Update Resume</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Interactive Click-to-Filter Metrics Cards -->
+    {% set total_apps = applications|length %}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <button type="button" class="metric-filter-card active text-left bg-white p-5 rounded-2xl border-2 border-teal-500 shadow-sm transition focus:outline-none" data-filter="all">
+            <div class="flex justify-between items-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <span>Total in Pipeline</span>
+                <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+            </div>
+            <div class="text-2xl font-black text-slate-900 mt-1.5">{{ total_apps }}</div>
+            <div class="text-[11px] text-teal-600 font-semibold mt-1">Show All Candidates</div>
+        </button>
+
+        <button type="button" class="metric-filter-card text-left bg-white p-5 rounded-2xl border border-slate-200 shadow-sm transition hover:border-blue-400 focus:outline-none" data-filter="Under Review">
+            <div class="flex justify-between items-center text-xs font-bold text-blue-600 uppercase tracking-wider">
+                <span>Under Review</span>
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            </div>
+            <div class="text-2xl font-black text-blue-700 mt-1.5">
+                {{ applications | selectattr('status', 'equalto', 'Under Review') | list | length }}
+            </div>
+            <div class="text-[11px] text-slate-400 font-medium mt-1">Filter under review</div>
+        </button>
+
+        <button type="button" class="metric-filter-card text-left bg-white p-5 rounded-2xl border border-slate-200 shadow-sm transition hover:border-amber-400 focus:outline-none" data-filter="Interviewing">
+            <div class="flex justify-between items-center text-xs font-bold text-amber-600 uppercase tracking-wider">
+                <span>Interviewing</span>
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            </div>
+            <div class="text-2xl font-black text-amber-700 mt-1.5">
+                {{ applications | selectattr('status', 'equalto', 'Interviewing') | list | length }}
+            </div>
+            <div class="text-[11px] text-slate-400 font-medium mt-1">Filter in interview</div>
+        </button>
+
+        <button type="button" class="metric-filter-card text-left bg-white p-5 rounded-2xl border border-slate-200 shadow-sm transition hover:border-emerald-400 focus:outline-none" data-filter="Offer Extended">
+            <div class="flex justify-between items-center text-xs font-bold text-emerald-600 uppercase tracking-wider">
+                <span>Offer Extended</span>
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            </div>
+            <div class="text-2xl font-black text-emerald-700 mt-1.5">
+                {{ applications | selectattr('status', 'equalto', 'Offer Extended') | list | length }}
+            </div>
+            <div class="text-[11px] text-slate-400 font-medium mt-1">Filter offered</div>
+        </button>
+    </div>
+
+    <!-- Search, Filter & View Pattern Switcher Toolbar -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <!-- Search Input -->
+        <div class="w-full md:w-96 relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+            <input type="text" id="candidate-search" placeholder="Search applicant, role, or email..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 focus:bg-white focus:outline-none">
+        </div>
+
+        <div class="w-full md:w-auto flex flex-wrap items-center justify-between md:justify-end gap-3">
+            <!-- Status Dropdown Filter -->
+            <select id="status-filter-select" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-teal-500 focus:bg-white focus:outline-none">
+                <option value="all">All Stages</option>
+                <option value="Submitted">Submitted</option>
+                <option value="Under Review">Under Review</option>
+                <option value="Interviewing">Interviewing</option>
+                <option value="Offer Extended">Offer Extended</option>
+                <option value="Rejected">Rejected</option>
+            </select>
+
+            {% if current_user.role == 'recruiter' %}
+            <!-- View Pattern Switcher: Table View vs Kanban Board View -->
+            <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                <button type="button" id="btn-view-table" class="view-toggle-btn active px-3 py-1.5 rounded-lg bg-white text-slate-800 shadow-sm transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-list text-xs"></i>
+                    <span>Table View</span>
+                </button>
+                <button type="button" id="btn-view-kanban" class="view-toggle-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-table-columns text-xs"></i>
+                    <span>Kanban Board</span>
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- VIEW 1: TABLE VIEW -->
+    <div id="container-table-view" class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden mb-8">
+        {% if applications %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-600">
+                <thead class="bg-slate-50 text-slate-700 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-4">Role & Company</th>
+                        <th class="px-6 py-4">Applicant</th>
+                        <th class="px-6 py-4">Resume Document</th>
+                        <th class="px-6 py-4">Date</th>
+                        <th class="px-6 py-4">Hiring Status</th>
+                        <th class="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100" id="applications-table-body">
+                    {% for app in applications %}
+                    <tr class="app-row hover:bg-slate-50/70 transition" 
+                        data-status="{{ app.status }}" 
+                        data-name="{{ app.applicant_name | lower }}" 
+                        data-email="{{ app.applicant_email | lower }}" 
+                        data-title="{{ app.job_title | lower }}" 
+                        data-id="{{ app.id }}">
+                        <td class="px-6 py-4 font-medium text-slate-900">
+                            <div class="font-bold text-base">{{ app.job_title }}</div>
+                            <div class="text-xs text-slate-500 font-medium">
+                                <i class="fa-solid fa-building mr-1"></i> {{ app.job_company }} • {{ app.job_location }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-3">
+                                <!-- Candidate Avatar Initials -->
+                                <div class="w-8 h-8 rounded-full bg-teal-100 text-teal-800 font-bold text-xs flex items-center justify-center flex-shrink-0">
+                                    {{ app.applicant_name[0] | upper }}{% if ' ' in app.applicant_name %}{{ app.applicant_name.split(' ')[1][0] | upper }}{% endif %}
+                                </div>
+                                <div>
+                                    <div class="font-bold text-slate-800">{{ app.applicant_name }}</div>
+                                    <div class="text-xs text-slate-500">{{ app.applicant_email }}</div>
+                                    {% if app.portfolio_url %}
+                                    <a href="{{ app.portfolio_url }}" target="_blank" class="text-[11px] text-teal-600 hover:underline inline-block mt-0.5">
+                                        <i class="fa-solid fa-arrow-up-right-from-square mr-0.5"></i> Portfolio / GitHub
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if app.resume_file %}
+                            <a href="{{ url_for('download_file', filename=app.resume_file) }}" target="_blank" class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition shadow-sm">
+                                <i class="fa-solid fa-file-arrow-down mr-1.5"></i> Download File
+                            </a>
+                            <div class="text-[10.5px] text-slate-400 mt-0.5 font-mono truncate max-w-[150px]">{{ app.resume_file }}</div>
+                            {% elif app.resume_id %}
+                            <button type="button" class="btn-check-resume inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-sm"
+                                    data-resume-id="{{ app.resume_id }}">
+                                <i class="fa-solid fa-id-card-clip mr-1.5"></i> Inspect Profile #{{ app.resume_id }}
+                            </button>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs text-slate-400 bg-slate-100">
+                                Direct Submission
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">
+                            {{ app.applied_at }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if current_user.role == 'recruiter' %}
+                            <select class="status-select px-3 py-1.5 rounded-lg text-xs font-bold border focus:outline-none transition cursor-pointer"
+                                    data-app-id="{{ app.id }}"
+                                    data-current-status="{{ app.status }}">
+                                <option value="Submitted" {% if app.status == 'Submitted' %}selected{% endif %}>Submitted</option>
+                                <option value="Under Review" {% if app.status == 'Under Review' %}selected{% endif %}>Under Review</option>
+                                <option value="Interviewing" {% if app.status == 'Interviewing' %}selected{% endif %}>Interviewing</option>
+                                <option value="Offer Extended" {% if app.status == 'Offer Extended' %}selected{% endif %}>Offer Extended</option>
+                                <option value="Rejected" {% if app.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
+                            {% else %}
+                            <span class="px-2.5 py-1 rounded-md text-xs font-bold 
+                                {% if app.status == 'Offer Extended' %}bg-emerald-100 text-emerald-800 border border-emerald-300
+                                {% elif app.status == 'Interviewing' %}bg-amber-100 text-amber-800 border border-amber-300
+                                {% elif app.status == 'Under Review' %}bg-blue-100 text-blue-800 border border-blue-300
+                                {% elif app.status == 'Rejected' %}bg-rose-100 text-rose-800 border border-rose-300
+                                {% else %}bg-slate-100 text-slate-700 border border-slate-300{% endif %}">
+                                {{ app.status }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-right whitespace-nowrap">
+                            <button type="button" class="btn-open-drawer px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition inline-flex items-center space-x-1"
+                                    data-id="{{ app.id }}"
+                                    data-name="{{ app.applicant_name }}"
+                                    data-email="{{ app.applicant_email }}"
+                                    data-title="{{ app.job_title }}"
+                                    data-company="{{ app.job_company }}"
+                                    data-status="{{ app.status }}"
+                                    data-date="{{ app.applied_at }}"
+                                    data-note="{{ app.cover_note }}"
+                                    data-resume-id="{{ app.resume_id or '' }}"
+                                    data-resume-file="{{ app.resume_file or '' }}">
+                                <i class="fa-solid fa-sliders text-xs"></i>
+                                <span>Quick Review</span>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-16">
+            <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto text-2xl mb-4">
+                <i class="fa-solid fa-clipboard-question"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800">No applications found</h3>
+            <p class="text-sm text-slate-500 mt-1">
+                {% if current_user.role == 'recruiter' %}
+                Post a new job opening to start receiving candidate submissions.
+                {% else %}
+                Browse verified openings on the Job Board and apply with 1 click.
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- VIEW 2: KANBAN BOARD VIEW (For Companies / Recruiters) -->
+    {% if current_user.role == 'recruiter' %}
+    <div id="container-kanban-view" class="hidden mb-10 overflow-x-auto pb-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 min-w-[1000px]">
+            
+            <!-- Column 1: Submitted -->
+            <div class="bg-slate-100/80 rounded-2xl p-4 flex flex-col border border-slate-200">
+                <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-200 text-xs font-bold text-slate-700">
+                    <span class="flex items-center"><i class="fa-solid fa-inbox mr-1.5 text-slate-500"></i> Submitted</span>
+                    <span class="kanban-col-count px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px]" data-col="Submitted">0</span>
+                </div>
+                <div class="kanban-cards-container space-y-3 flex-grow" data-stage="Submitted"></div>
+            </div>
+
+            <!-- Column 2: Under Review -->
+            <div class="bg-blue-50/60 rounded-2xl p-4 flex flex-col border border-blue-200">
+                <div class="flex justify-between items-center mb-3 pb-2 border-b border-blue-200 text-xs font-bold text-blue-800">
+                    <span class="flex items-center"><i class="fa-solid fa-magnifying-glass mr-1.5 text-blue-600"></i> Under Review</span>
+                    <span class="kanban-col-count px-2 py-0.5 rounded-full bg-blue-200 text-blue-800 text-[10px]" data-col="Under Review">0</span>
+                </div>
+                <div class="kanban-cards-container space-y-3 flex-grow" data-stage="Under Review"></div>
+            </div>
+
+            <!-- Column 3: Interviewing -->
+            <div class="bg-amber-50/60 rounded-2xl p-4 flex flex-col border border-amber-200">
+                <div class="flex justify-between items-center mb-3 pb-2 border-b border-amber-200 text-xs font-bold text-amber-800">
+                    <span class="flex items-center"><i class="fa-solid fa-calendar-check mr-1.5 text-amber-600"></i> Interviewing</span>
+                    <span class="kanban-col-count px-2 py-0.5 rounded-full bg-amber-200 text-amber-800 text-[10px]" data-col="Interviewing">0</span>
+                </div>
+                <div class="kanban-cards-container space-y-3 flex-grow" data-stage="Interviewing"></div>
+            </div>
+
+            <!-- Column 4: Offer Extended -->
+            <div class="bg-emerald-50/60 rounded-2xl p-4 flex flex-col border border-emerald-200">
+                <div class="flex justify-between items-center mb-3 pb-2 border-b border-emerald-200 text-xs font-bold text-emerald-800">
+                    <span class="flex items-center"><i class="fa-solid fa-award mr-1.5 text-emerald-600"></i> Offer Extended</span>
+                    <span class="kanban-col-count px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-800 text-[10px]" data-col="Offer Extended">0</span>
+                </div>
+                <div class="kanban-cards-container space-y-3 flex-grow" data-stage="Offer Extended"></div>
+            </div>
+
+            <!-- Column 5: Rejected -->
+            <div class="bg-rose-50/60 rounded-2xl p-4 flex flex-col border border-rose-200">
+                <div class="flex justify-between items-center mb-3 pb-2 border-b border-rose-200 text-xs font-bold text-rose-800">
+                    <span class="flex items-center"><i class="fa-solid fa-circle-xmark mr-1.5 text-rose-600"></i> Rejected</span>
+                    <span class="kanban-col-count px-2 py-0.5 rounded-full bg-rose-200 text-rose-800 text-[10px]" data-col="Rejected">0</span>
+                </div>
+                <div class="kanban-cards-container space-y-3 flex-grow" data-stage="Rejected"></div>
+            </div>
+
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- SLIDE-OVER CANDIDATE INSPECTION DRAWER (Easy Accessibility Pattern) -->
+<div id="candidate-drawer" class="fixed inset-0 z-50 overflow-hidden hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" id="drawer-backdrop"></div>
+    <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+        <div class="w-screen max-w-xl bg-white shadow-2xl flex flex-col border-l border-slate-200">
+            
+            <!-- Drawer Header -->
+            <div class="p-6 border-b border-slate-200 flex justify-between items-start bg-slate-50/80">
+                <div>
+                    <span id="drawer-badge-status" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800">Stage</span>
+                    <h2 class="text-xl font-black text-slate-900 mt-2" id="drawer-candidate-name">Candidate Name</h2>
+                    <p class="text-xs font-semibold text-teal-600" id="drawer-job-title">Role Title</p>
+                </div>
+                <button type="button" id="btn-close-drawer" class="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Drawer Body -->
+            <div class="p-6 space-y-6 overflow-y-auto flex-grow text-xs text-slate-700">
+                
+                <!-- Quick Contact Bar -->
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Contact & Links</div>
+                    <div class="flex flex-wrap items-center gap-4 text-xs">
+                        <a id="drawer-email-link" href="#" class="text-teal-700 font-bold hover:underline flex items-center space-x-1">
+                            <i class="fa-solid fa-envelope text-teal-600"></i>
+                            <span id="drawer-email-text">email</span>
+                        </a>
+                        <span id="drawer-date" class="text-slate-400"><i class="fa-regular fa-clock mr-1"></i> Date</span>
+                    </div>
+                </div>
+
+                <!-- Stage Transition Quick Actions (For Recruiters) -->
+                {% if current_user.role == 'recruiter' %}
+                <div class="p-4 bg-blue-50/60 rounded-2xl border border-blue-200 space-y-2">
+                    <div class="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Fast Stage Advancement</div>
+                    <div class="flex flex-wrap gap-2 pt-1">
+                        <button type="button" class="btn-fast-advance px-3 py-1.5 bg-white border border-blue-300 hover:bg-blue-100 text-blue-800 rounded-lg text-xs font-bold transition" data-next="Under Review">
+                            🔍 Review
+                        </button>
+                        <button type="button" class="btn-fast-advance px-3 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-800 rounded-lg text-xs font-bold transition" data-next="Interviewing">
+                            🗓️ Schedule Interview
+                        </button>
+                        <button type="button" class="btn-fast-advance px-3 py-1.5 bg-white border border-emerald-300 hover:bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold transition" data-next="Offer Extended">
+                            🎉 Extend Offer
+                        </button>
+                        <button type="button" class="btn-fast-advance px-3 py-1.5 bg-white border border-rose-300 hover:bg-rose-100 text-rose-800 rounded-lg text-xs font-bold transition" data-next="Rejected">
+                            ❌ Reject
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Cover Pitch Note -->
+                <div>
+                    <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider mb-2 flex items-center space-x-1.5">
+                        <i class="fa-solid fa-comment-dots text-teal-600"></i>
+                        <span>Candidate Pitch / Cover Note</span>
+                    </h4>
+                    <p id="drawer-pitch-note" class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl italic leading-relaxed text-slate-600">
+                        No pitch provided.
+                    </p>
+                </div>
+
+                <!-- Attached Resume Preview Block -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center space-x-1.5">
+                            <i class="fa-solid fa-file-invoice text-teal-600"></i>
+                            <span>Attached Resume Profile</span>
+                        </h4>
+                        <div id="drawer-resume-action-slot"></div>
+                    </div>
+                    <div id="drawer-resume-details" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                        Loading resume details...
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Inspecting Full Profile #ID -->
+<div id="app-resume-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 p-6 sm:p-8 relative">
+        <button type="button" id="btn-close-app-resume" class="absolute top-6 right-6 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <h3 class="text-xl font-bold text-slate-900 mb-1" id="arm-name">Candidate Resume</h3>
+        <p class="text-xs text-slate-500 mb-4" id="arm-subtitle"></p>
+
+        <div id="arm-content" class="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-xs space-y-4">
+            Loading...
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- 1. Client-Side Search & Filter Patterns ---
+    const searchInput = document.getElementById('candidate-search');
+    const statusFilterSelect = document.getElementById('status-filter-select');
+    const metricCards = document.querySelectorAll('.metric-filter-card');
+    const appRows = document.querySelectorAll('.app-row');
+
+    function applyFilter() {
+        const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const selectedStatus = statusFilterSelect ? statusFilterSelect.value : 'all';
+
+        appRows.forEach(row => {
+            const name = row.getAttribute('data-name') || '';
+            const email = row.getAttribute('data-email') || '';
+            const title = row.getAttribute('data-title') || '';
+            const status = row.getAttribute('data-status') || '';
+
+            const matchesQuery = !query || name.includes(query) || email.includes(query) || title.includes(query);
+            const matchesStatus = (selectedStatus === 'all') || (status === selectedStatus);
+
+            if (matchesQuery && matchesStatus) {
+                row.classList.remove('hidden');
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+
+        // Also sync Kanban board view cards
+        document.querySelectorAll('.kanban-card').forEach(card => {
+            const name = card.getAttribute('data-name') || '';
+            const email = card.getAttribute('data-email') || '';
+            const title = card.getAttribute('data-title') || '';
+            const status = card.getAttribute('data-status') || '';
+
+            const matchesQuery = !query || name.includes(query) || email.includes(query) || title.includes(query);
+            const matchesStatus = (selectedStatus === 'all') || (status === selectedStatus);
+
+            if (matchesQuery && matchesStatus) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    }
+
+    if (searchInput) searchInput.addEventListener('input', applyFilter);
+    if (statusFilterSelect) statusFilterSelect.addEventListener('change', applyFilter);
+
+    // Interactive Metric Cards click-to-filter
+    metricCards.forEach(card => {
+        card.addEventListener('click', () => {
+            metricCards.forEach(c => {
+                c.classList.remove('border-2', 'border-teal-500', 'active');
+                c.classList.add('border-slate-200');
+            });
+            card.classList.add('border-2', 'border-teal-500', 'active');
+            card.classList.remove('border-slate-200');
+
+            const filter = card.getAttribute('data-filter');
+            if (statusFilterSelect) {
+                statusFilterSelect.value = filter;
+            }
+            applyFilter();
+        });
+    });
+
+    // --- 2. View Pattern Switcher: Table View ⟷ Kanban Board ---
+    const btnViewTable = document.getElementById('btn-view-table');
+    const btnViewKanban = document.getElementById('btn-view-kanban');
+    const containerTable = document.getElementById('container-table-view');
+    const containerKanban = document.getElementById('container-kanban-view');
+
+    function populateKanbanBoard() {
+        if (!containerKanban) return;
+
+        // Clear existing kanban columns
+        document.querySelectorAll('.kanban-cards-container').forEach(c => c.innerHTML = '');
+        const counts = { 'Submitted': 0, 'Under Review': 0, 'Interviewing': 0, 'Offer Extended': 0, 'Rejected': 0 };
+
+        appRows.forEach(row => {
+            const id = row.getAttribute('data-id');
+            const status = row.getAttribute('data-status') || 'Submitted';
+            const name = row.querySelector('.font-bold.text-slate-800')?.textContent || 'Candidate';
+            const email = row.querySelector('.text-xs.text-slate-500')?.textContent || '';
+            const role = row.querySelector('.font-bold.text-base')?.textContent || 'Role';
+            const company = row.querySelector('.text-xs.font-medium')?.textContent || '';
+            const date = row.querySelector('td:nth-child(4)')?.textContent?.trim() || '';
+
+            counts[status] = (counts[status] || 0) + 1;
+
+            const colContainer = document.querySelector(`.kanban-cards-container[data-stage="${status}"]`);
+            if (colContainer) {
+                const card = document.createElement('div');
+                card.className = 'kanban-card bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm hover:shadow transition text-xs space-y-2';
+                card.setAttribute('data-id', id);
+                card.setAttribute('data-status', status);
+                card.setAttribute('data-name', name.toLowerCase());
+                card.setAttribute('data-email', email.toLowerCase());
+                card.setAttribute('data-title', role.toLowerCase());
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="font-bold text-slate-800 text-sm">${name}</div>
+                        <span class="w-2 h-2 rounded-full ${getStatusDotColor(status)}"></span>
+                    </div>
+                    <div class="text-[11px] text-teal-700 font-semibold">${role}</div>
+                    <div class="text-[10px] text-slate-400">${date}</div>
+                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <button type="button" class="btn-kanban-inspect text-[11px] font-bold text-slate-600 hover:text-teal-600" data-row-id="${id}">
+                            View Details →
+                        </button>
+                        <select class="kanban-move-select text-[10px] font-bold bg-slate-50 border rounded px-1.5 py-0.5" data-app-id="${id}">
+                            <option value="Submitted" ${status === 'Submitted' ? 'selected' : ''}>Submitted</option>
+                            <option value="Under Review" ${status === 'Under Review' ? 'selected' : ''}>Review</option>
+                            <option value="Interviewing" ${status === 'Interviewing' ? 'selected' : ''}>Interview</option>
+                            <option value="Offer Extended" ${status === 'Offer Extended' ? 'selected' : ''}>Offer</option>
+                            <option value="Rejected" ${status === 'Rejected' ? 'selected' : ''}>Reject</option>
+                        </select>
+                    </div>
+                `;
+                colContainer.appendChild(card);
+            }
+        });
+
+        // Update column badge counts
+        Object.keys(counts).forEach(k => {
+            const badge = document.querySelector(`.kanban-col-count[data-col="${k}"]`);
+            if (badge) badge.textContent = counts[k];
+        });
+
+        // Attach listeners to newly created kanban selects
+        document.querySelectorAll('.kanban-move-select').forEach(sel => {
+            sel.addEventListener('change', async (e) => {
+                const appId = e.target.getAttribute('data-app-id');
+                const newStatus = e.target.value;
+                await updateStatusAPI(appId, newStatus);
+            });
+        });
+
+        // Attach listeners to kanban view details buttons
+        document.querySelectorAll('.btn-kanban-inspect').forEach(b => {
+            b.addEventListener('click', () => {
+                const rowId = b.getAttribute('data-row-id');
+                const rowBtn = document.querySelector(`.app-row[data-id="${rowId}"] .btn-open-drawer`);
+                if (rowBtn) rowBtn.click();
+            });
+        });
+    }
+
+    function getStatusDotColor(status) {
+        if (status === 'Submitted') return 'bg-slate-400';
+        if (status === 'Under Review') return 'bg-blue-500';
+        if (status === 'Interviewing') return 'bg-amber-500';
+        if (status === 'Offer Extended') return 'bg-emerald-500';
+        if (status === 'Rejected') return 'bg-rose-500';
+        return 'bg-slate-400';
+    }
+
+    if (btnViewTable && btnViewKanban) {
+        btnViewTable.addEventListener('click', () => {
+            btnViewTable.classList.add('active', 'bg-white', 'text-slate-800', 'shadow-sm');
+            btnViewTable.classList.remove('text-slate-600');
+            btnViewKanban.classList.remove('active', 'bg-white', 'text-slate-800', 'shadow-sm');
+            btnViewKanban.classList.add('text-slate-600');
+
+            containerTable.classList.remove('hidden');
+            containerKanban.classList.add('hidden');
+        });
+
+        btnViewKanban.addEventListener('click', () => {
+            btnViewKanban.classList.add('active', 'bg-white', 'text-slate-800', 'shadow-sm');
+            btnViewKanban.classList.remove('text-slate-600');
+            btnViewTable.classList.remove('active', 'bg-white', 'text-slate-800', 'shadow-sm');
+            btnViewTable.classList.add('text-slate-600');
+
+            populateKanbanBoard();
+            containerTable.classList.add('hidden');
+            containerKanban.classList.remove('hidden');
+            applyFilter();
+        });
+    }
+
+    // --- 3. Slide-Out Candidate Inspection Drawer Pattern ---
+    const drawer = document.getElementById('candidate-drawer');
+    const btnCloseDrawer = document.getElementById('btn-close-drawer');
+    const drawerBackdrop = document.getElementById('drawer-backdrop');
+    const drawerName = document.getElementById('drawer-candidate-name');
+    const drawerRole = document.getElementById('drawer-job-title');
+    const drawerStatus = document.getElementById('drawer-badge-status');
+    const drawerEmailLink = document.getElementById('drawer-email-link');
+    const drawerEmailText = document.getElementById('drawer-email-text');
+    const drawerDate = document.getElementById('drawer-date');
+    const drawerPitch = document.getElementById('drawer-pitch-note');
+    const drawerResumeDetails = document.getElementById('drawer-resume-details');
+    const drawerResumeSlot = document.getElementById('drawer-resume-action-slot');
+
+    let activeDrawerAppId = null;
+
+    document.querySelectorAll('.btn-open-drawer').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            activeDrawerAppId = btn.getAttribute('data-id');
+            const name = btn.getAttribute('data-name');
+            const email = btn.getAttribute('data-email');
+            const title = btn.getAttribute('data-title');
+            const status = btn.getAttribute('data-status');
+            const date = btn.getAttribute('data-date');
+            const note = btn.getAttribute('data-note');
+            const resumeId = btn.getAttribute('data-resume-id');
+            const resumeFile = btn.getAttribute('data-resume-file');
+
+            drawerName.textContent = name;
+            drawerRole.textContent = title;
+            drawerStatus.textContent = status;
+            drawerStatus.className = `px-2.5 py-0.5 rounded-full text-[11px] font-bold ${getStatusDotColor(status).replace('bg-', 'bg-').replace('-500', '-100 text-slate-800')}`;
+            
+            drawerEmailLink.href = `mailto:${email}`;
+            drawerEmailText.textContent = email;
+            drawerDate.innerHTML = `<i class="fa-regular fa-clock mr-1"></i> Applied: ${date}`;
+            drawerPitch.textContent = note ? `"${note}"` : 'No cover note provided for this application.';
+
+            drawerResumeSlot.innerHTML = '';
+            drawerResumeDetails.innerHTML = '<div class="text-slate-400">Loading resume preview...</div>';
+
+            if (resumeFile) {
+                drawerResumeSlot.innerHTML = `
+                    <a href="/uploads/${resumeFile}" target="_blank" class="px-2.5 py-1 bg-blue-50 text-blue-700 font-bold rounded-lg border border-blue-200 text-xs hover:bg-blue-100 transition">
+                        <i class="fa-solid fa-file-arrow-down mr-1"></i> Download File
+                    </a>
+                `;
+                drawerResumeDetails.innerHTML = `
+                    <div class="p-3 bg-white rounded-xl border border-slate-200">
+                        <div class="font-bold text-slate-800">Uploaded Resume Document</div>
+                        <div class="text-slate-500 font-mono text-[11px] mt-0.5">${resumeFile}</div>
+                    </div>
+                `;
+            } else if (resumeId) {
+                drawerResumeSlot.innerHTML = `
+                    <button type="button" class="btn-check-resume px-2.5 py-1 bg-emerald-50 text-emerald-700 font-bold rounded-lg border border-emerald-200 text-xs hover:bg-emerald-100 transition" data-resume-id="${resumeId}">
+                        <i class="fa-solid fa-id-card-clip mr-1"></i> Full Modal View
+                    </button>
+                `;
+                try {
+                    const res = await fetch(`/api/resumes/${resumeId}`);
+                    const result = await res.json();
+                    if (result.data) {
+                        const data = result.data;
+                        drawerResumeDetails.innerHTML = `
+                            <div class="space-y-3">
+                                <div><strong class="text-teal-700">Summary:</strong><p class="text-slate-600 mt-0.5 leading-relaxed">${data.summary || 'None'}</p></div>
+                                <div><strong class="text-teal-700">Skills:</strong><p class="text-slate-800 font-medium mt-0.5">${data.skills || 'None'}</p></div>
+                                <div>
+                                    <strong class="text-teal-700">Experience:</strong>
+                                    <div class="mt-1 space-y-1.5">
+                                        ${(data.experience || []).map(e => `
+                                            <div class="p-2 bg-white rounded-lg border border-slate-200">
+                                                <div class="font-bold text-slate-900">${e.role} <span class="font-normal text-slate-500">at ${e.company}</span></div>
+                                                <div class="text-[10px] text-slate-400">${e.dates || ''}</div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                } catch(err) {
+                    drawerResumeDetails.innerHTML = 'Error loading resume details.';
+                }
+            } else {
+                drawerResumeDetails.innerHTML = '<div class="text-slate-400">Direct Submission without attached profile.</div>';
+            }
+
+            drawer.classList.remove('hidden');
+        });
+    });
+
+    const closeDrawer = () => drawer.classList.add('hidden');
+    if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', closeDrawer);
+    if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeDrawer);
+
+    // Fast Stage Advancement in Drawer
+    document.querySelectorAll('.btn-fast-advance').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            if (!activeDrawerAppId) return;
+            const nextStatus = btn.getAttribute('data-next');
+            await updateStatusAPI(activeDrawerAppId, nextStatus);
+            closeDrawer();
+        });
+    });
+
+    // --- 4. Status Update API Helper ---
+    async function updateStatusAPI(appId, newStatus) {
+        try {
+            const res = await fetch(`/api/applications/${appId}/status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+            const result = await res.json();
+            if (result.success) {
+                // Update table row attribute and select value
+                const row = document.querySelector(`.app-row[data-id="${appId}"]`);
+                if (row) {
+                    row.setAttribute('data-status', newStatus);
+                    const sel = row.querySelector('.status-select');
+                    if (sel) {
+                        sel.value = newStatus;
+                        applyStatusBadgeStyle(sel);
+                    }
+                }
+                // Refresh kanban board if open
+                if (!containerKanban.classList.contains('hidden')) {
+                    populateKanbanBoard();
+                }
+            } else {
+                alert('Failed to update stage.');
+            }
+        } catch(err) {
+            console.error(err);
+            alert('Network error updating stage.');
+        }
+    }
+
+    // Status Select Change in Table
+    document.querySelectorAll('.status-select').forEach(select => {
+        applyStatusBadgeStyle(select);
+
+        select.addEventListener('change', async (e) => {
+            const appId = e.target.getAttribute('data-app-id');
+            const newStatus = e.target.value;
+            await updateStatusAPI(appId, newStatus);
+        });
+    });
+
+    function applyStatusBadgeStyle(elem) {
+        const val = elem.value;
+        elem.className = 'status-select px-3 py-1.5 rounded-lg text-xs font-bold border focus:outline-none transition cursor-pointer ';
+        if (val === 'Submitted') elem.className += 'bg-slate-100 text-slate-700 border-slate-300';
+        else if (val === 'Under Review') elem.className += 'bg-blue-50 text-blue-700 border-blue-200';
+        else if (val === 'Interviewing') elem.className += 'bg-amber-50 text-amber-700 border-amber-300';
+        else if (val === 'Offer Extended') elem.className += 'bg-emerald-50 text-emerald-800 border-emerald-300';
+        else if (val === 'Rejected') elem.className += 'bg-rose-50 text-rose-700 border-rose-200';
+    }
+
+    // --- 5. Export Candidates to CSV Pattern ---
+    const btnExportCsv = document.getElementById('btn-export-csv');
+    if (btnExportCsv) {
+        btnExportCsv.addEventListener('click', () => {
+            const rows = [["Candidate Name", "Email", "Job Title", "Company", "Stage", "Applied Date"]];
+            appRows.forEach(r => {
+                const name = r.querySelector('.font-bold.text-slate-800')?.textContent?.trim() || '';
+                const email = r.querySelector('.text-xs.text-slate-500')?.textContent?.trim() || '';
+                const title = r.querySelector('.font-bold.text-base')?.textContent?.trim() || '';
+                const comp = r.querySelector('.text-xs.font-medium')?.textContent?.trim() || '';
+                const date = r.querySelector('td:nth-child(4)')?.textContent?.trim() || '';
+                const status = r.getAttribute('data-status') || '';
+                rows.push([name, email, title, comp, status, date]);
+            });
+
+            const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(",")).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `CareerCraft_Candidates_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    }
+
+    // Modal inspect handler
+    const appResumeModal = document.getElementById('app-resume-modal');
+    const btnCloseAppResume = document.getElementById('btn-close-app-resume');
+    const armName = document.getElementById('arm-name');
+    const armSubtitle = document.getElementById('arm-subtitle');
+    const armContent = document.getElementById('arm-content');
+
+    document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.btn-check-resume');
+        if (!btn) return;
+        const resumeId = btn.getAttribute('data-resume-id');
+        armContent.innerHTML = 'Loading resume details...';
+        appResumeModal.classList.remove('hidden');
+
+        try {
+            const res = await fetch(`/api/resumes/${resumeId}`);
+            const result = await res.json();
+            if (result.data) {
+                const data = result.data;
+                armName.textContent = data.personal?.fullName || 'Applicant Profile';
+                armSubtitle.textContent = `${data.personal?.title || ''} • ${data.personal?.email || ''}`;
+
+                armContent.innerHTML = `
+                    <div class="space-y-3">
+                        <div><strong class="text-teal-700">Summary:</strong><p class="text-slate-600 mt-0.5">${data.summary || 'None'}</p></div>
+                        <div><strong class="text-teal-700">Skills:</strong><p class="text-slate-600 mt-0.5">${data.skills || 'None'}</p></div>
+                        <div>
+                            <strong class="text-teal-700">Experience (${(data.experience || []).length} Roles):</strong>
+                            <div class="mt-1 space-y-2">
+                                ${(data.experience || []).map(exp => `
+                                    <div class="border-l-2 border-teal-500 pl-2">
+                                        <span class="font-bold text-slate-800">${exp.role}</span> at ${exp.company} (${exp.dates})
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        } catch (err) {
+            armContent.innerHTML = 'Error loading resume profile.';
+        }
+    });
+
+    if (btnCloseAppResume) btnCloseAppResume.addEventListener('click', () => appResumeModal.classList.add('hidden'));
+    if (appResumeModal) {
+        appResumeModal.addEventListener('click', (e) => {
+            if (e.target === appResumeModal) appResumeModal.classList.add('hidden');
+        });
+    }
+</script>
+{% endblock %}
